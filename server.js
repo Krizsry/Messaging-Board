@@ -55,20 +55,19 @@ io.on('connection', (socket) => {
 
     // Handle new messages
     socket.on('newMessage', (data) => {
-        if (!isPrivate || data.admin) {
-            const ip = socket.handshake.address;
-            const query = `INSERT INTO messages (username, message, ip) VALUES (?, ?, ?)`;
-            db.run(query, [data.username, data.message, ip], function (err) {
-                if (err) {
-                    console.error(err.message);
-                    return;
-                }
+        const ip = socket.handshake.address;
+        const query = `INSERT INTO messages (username, message, ip) VALUES (?, ?, ?)`;
+        db.run(query, [data.username, data.message, ip], function (err) {
+            if (err) {
+                console.error(err.message);
+                return;
+            }
+            if (!isPrivate || data.admin) {
                 io.emit('messages', []); // Broadcast the updated messages
                 sendMessages();
-            });
-        }
+            }
+        });
     });
-});
 
     // Emit current private mode status to the client
     socket.emit('privateStatus', isPrivate);
@@ -80,7 +79,15 @@ io.on('connection', (socket) => {
         console.log(`Private mode is now ${isPrivate ? 'enabled' : 'disabled'}`);
     });
 
-    
+    // Send messages to the client initially
+    socket.on('getMessages', ({ admin }) => {
+        if (!isPrivate || admin) {
+            sendMessages(admin);
+        } else {
+            socket.emit('messages', []); // Send an empty list to non-admins
+        }
+    });
+
     // Handle delete message
     socket.on('deleteMessage', (id) => {
         db.run('DELETE FROM messages WHERE id = ?', [id], (err) => {
@@ -91,20 +98,6 @@ io.on('connection', (socket) => {
             io.emit('messages', []); // Update all clients
             sendMessages();
         });
-    });
-
- // Send messages only if not in private mode or if the user is admin
-    socket.on('getMessages', ({ admin }) => {
-        if (!isPrivate || admin) {
-            sendMessages(admin);
-        } else {
-            socket.emit('messages', []); // Send an empty list to non-admins
-        }
-    });
-    
-    // Send messages to the client initially
-    socket.on('getMessages', ({ admin }) => {
-        sendMessages(admin);
     });
 
     socket.on('disconnect', () => {

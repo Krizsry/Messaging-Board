@@ -38,18 +38,11 @@ function renderMessages(messages, admin = false) {
                     hour12: true,
                     month: 'short',
                     day: 'numeric',
-                })}</span>
-                ${admin && msg.ip ? ` - IP: ${msg.ip}` : ""}
+                })}</span> 
+                ${admin ? ` - IP: ${msg.ip}` : ""}
                 ${admin ? `<button onclick="deleteMessage(${msg.id})">Delete</button>` : ""}
             </p>`
-    ).join(""); 
-
-    if (admin) {
-        document.getElementById('adminMessages').innerHTML = messageHTML;
-    } else {
-        messagesDiv.innerHTML = messageHTML;
-    }
-}
+    ).join(""); // Do NOT reverse; display as provided.
 
     // Insert messages in the correct order
     if (admin) {

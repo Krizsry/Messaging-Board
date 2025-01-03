@@ -41,23 +41,17 @@ io.on('connection', (socket) => {
 
     // Send all messages to the client
     function sendMessages(admin = false) {
-        if (isPrivate && !admin) {
-            // Do not send messages if private mode is enabled and the user is not an admin
-            socket.emit('messages', []);
+    const query = admin
+        ? 'SELECT * FROM messages ORDER BY timestamp DESC' // Already descending
+        : 'SELECT id, username, message, timestamp FROM messages ORDER BY timestamp DESC';
+    db.all(query, [], (err, rows) => {
+        if (err) {
+            console.error(err.message);
             return;
         }
-
-        const query = admin
-            ? 'SELECT * FROM messages ORDER BY timestamp DESC'
-            : 'SELECT id, username, message, timestamp FROM messages ORDER BY timestamp DESC';
-        db.all(query, [], (err, rows) => {
-            if (err) {
-                console.error(err.message);
-                return;
-            }
-            socket.emit('messages', rows);
-        });
-    }
+        io.emit('messages', rows); // Send to all clients
+    });
+}
 
     // Handle new messages
     socket.on('newMessage', (data) => {

@@ -9,7 +9,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 const PORT = 3000;
 
-let isPrivate = false; // Private mode status
+let isPrivate = false;
 
 // SQLite Database Setup
 const db = new sqlite3.Database('./messages.db', (err) => {
@@ -32,45 +32,48 @@ const db = new sqlite3.Database('./messages.db', (err) => {
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Trust proxy for correct IP retrieval when deployed
+app.set('trust proxy', true);
+
 // Socket.IO connection
 io.on('connection', (socket) => {
     console.log('A user connected');
 
-    // Emit the current private mode status
-    socket.emit('privateStatus', isPrivate);
-
     // Send all messages to the client
     function sendMessages(admin = false) {
-    const query = admin
-        ? 'SELECT * FROM messages ORDER BY timestamp DESC' // Already descending
-        : 'SELECT id, username, message, timestamp FROM messages ORDER BY timestamp DESC';
-    db.all(query, [], (err, rows) => {
-        if (err) {
-            console.error(err.message);
-            return;
-        }
-        io.emit('messages', rows); // Send to all clients
-    });
-}
+        const query = admin
+            ? 'SELECT * FROM messages ORDER BY timestamp DESC'
+            : 'SELECT id, username, message, timestamp FROM messages ORDER BY timestamp DESC';
+        db.all(query, [], (err, rows) => {
+            if (err) {
+                console.error(err.message);
+                return;
+            }
+            socket.emit('messages', rows);
+        });
+    }
 
     // Handle new messages
     socket.on('newMessage', (data) => {
-        const ip = socket.handshake.address;
+        const ip = socket.handshake.headers['x-forwarded-for'] || socket.handshake.address; // Capture IP
         const query = `INSERT INTO messages (username, message, ip) VALUES (?, ?, ?)`;
         db.run(query, [data.username, data.message, ip], function (err) {
             if (err) {
                 console.error(err.message);
                 return;
             }
-            io.emit('messages', []); // Broadcast updated messages
+            io.emit('messages', []); // Broadcast the updated messages
             sendMessages();
         });
     });
 
+    // Emit current private mode status to the client
+    socket.emit('privateStatus', isPrivate);
+
     // Handle toggle private mode
     socket.on('setPrivateMode', (status) => {
-        isPrivate = status; // Update private mode status
-        io.emit('privateStatus', isPrivate); // Notify all clients
+        isPrivate = status;
+        io.emit('privateStatus', isPrivate);
     });
 
     // Handle delete message
@@ -80,7 +83,7 @@ io.on('connection', (socket) => {
                 console.error(err.message);
                 return;
             }
-            io.emit('messages', []); // Broadcast updated messages
+            io.emit('messages', []); // Update all clients
             sendMessages();
         });
     });
@@ -90,9 +93,6 @@ io.on('connection', (socket) => {
         sendMessages(admin);
     });
 
-    // Send all messages when a client connects
-    sendMessages(); // Default behavior for non-admin users
-
     socket.on('disconnect', () => {
         console.log('A user disconnected');
     });
@@ -100,5 +100,5 @@ io.on('connection', (socket) => {
 
 // Start the server
 server.listen(PORT, () => {
-    console.log(`32Server running on http://localhost:${PORT}`);
+    console.log(`Server running on http://localhost:${PORT}`);
 });

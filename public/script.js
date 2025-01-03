@@ -42,14 +42,16 @@ function renderMessages(messages, admin = false) {
                 ${admin ? ` - IP: ${msg.ip}` : ""}
                 ${admin ? `<button onclick="deleteMessage(${msg.id})">Delete</button>` : ""}
             </p>`
-    ).reverse().join(""); // Show newest messages at the top
+    ).join(""); // Do NOT reverse; display as provided.
 
+    // Insert messages in the correct order
     if (admin) {
         document.getElementById('adminMessages').innerHTML = messageHTML;
     } else {
         messagesDiv.innerHTML = messageHTML;
     }
 }
+
 
 // Submit a new message
 form.addEventListener('submit', (e) => {

@@ -1,0 +1,66 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  padding: 0;
+  background-color: #f9f9f9;
+}
+
+h1, h2 {
+  text-align: center;
+  color: #333;
+}
+
+form, #adminPanel {
+  max-width: 400px;
+  margin: 20px auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+input, textarea, button {
+  padding: 10px;
+  font-size: 16px;
+}
+
+#messages, #adminMessages {
+  max-width: 400px;
+  margin: 20px auto;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 10px;
+}
+
+#messages p span {
+  float: right;
+  color: gray;
+  font-size: 0.9em;
+}
+
+.timestamp {
+  font-size: 0.8em;
+  color: rgb(44, 44, 44); /* Faded black */
+  float: right; /* Align to the right */
+  margin-left: 10px; /* Add space between the message and timestamp */
+}
+
+#notification {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: #4caf50; /* Green background */
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  font-size: 1em;
+}
+
+#credits {
+  text-align: center;
+  margin-top: 20px;
+  font-size: 0.9em;
+  color: gray;
+}

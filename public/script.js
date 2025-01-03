@@ -6,6 +6,8 @@ const adminPanel = document.getElementById('adminPanel');
 const togglePrivateButton = document.getElementById('togglePrivate');
 const privateIndicator = document.getElementById('privateIndicator');
 
+
+
 // Add notification element
 const notificationDiv = document.createElement('div');
 notificationDiv.id = 'notification';
@@ -83,26 +85,31 @@ function updatePrivateStatus(isPrivate) {
     privateIndicator.textContent = isPrivate ? "On" : "Off";
 }
 
-// Toggle private mode
-togglePrivateButton.addEventListener('click', () => {
-    isPrivate = !isPrivate;
-    socket.emit('setPrivateMode', isPrivate);
-    updatePrivateStatus(isPrivate);
+// Admin toggles private mode
+document.getElementById('togglePrivateMode').addEventListener('click', () => {
+    const newStatus = !isPrivate; // Toggle the current status
+    socket.emit('setPrivateMode', newStatus);
 });
+
 
 // Delete a message
 function deleteMessage(id) {
     socket.emit('deleteMessage', id); // Emit a delete message event
 }
 
-// Listen for messages updates
-socket.on('messages', (messages) => {
-    if (!isPrivate || isAdmin) {
-        renderMessages(messages, isAdmin);
-    } else {
-        messagesDiv.innerHTML = '<p>The message board is currently private.</p>';
-    }
+const privateStatusDiv = document.createElement('div');
+privateStatusDiv.id = 'privateStatus';
+document.body.appendChild(privateStatusDiv);
+
+// Listen for private mode status
+socket.on('privateStatus', (status) => {
+    const isPrivate = status;
+    privateStatusDiv.textContent = isPrivate
+        ? 'The chat board is currently private. Only admins can view messages.'
+        : 'The chat board is public.';
+    privateStatusDiv.style.color = isPrivate ? 'red' : 'green';
 });
+
 
 // Listen for private mode updates
 socket.on('privateStatus', (status) => {
